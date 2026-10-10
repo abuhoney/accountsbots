@@ -103,7 +103,12 @@ def run_webhook_mode(app: Application) -> None:
                                   allowed_updates=Update.ALL_TYPES)
         logger.info("webhook mode active at {}", url)
         await webhook.wait_for_stop()
-        await app.bot.delete_webhook(drop_pending_updates=True)
+        # Keep the Telegram webhook registered on shutdown: Render free tier
+        # spins the service down after ~15 min of inactivity. Deleting the
+        # webhook here (as the original code did, with drop_pending_updates)
+        # left the bot unreachable while asleep — updates were never delivered
+        # and nothing could wake the service. The webhook is idempotently
+        # re-set on every boot, so it is safe to leave it in place.
         await runner.cleanup()
         await _post_shutdown(app)
         await app.stop()
