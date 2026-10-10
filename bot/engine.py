@@ -1306,10 +1306,17 @@ class FlowEngine:
             return
         # __MBM_EXT_AUTH_ENFORCE__
         if flow.get("requires_auth"):
+            # Auth middleware: register the user BEFORE the gate. The original
+            # order (gate first, touch after) could never be satisfied for a
+            # brand-new user: every flow — including /start — is requires_auth,
+            # so the users table stayed empty forever and every command was
+            # denied with "registration required" ("You are not allowed to do
+            # this."). touch() upserts without touching is_banned, so banned
+            # users are still rejected below.
+            await self.db.users.touch(ctx)
             _u = await self.db.users.get(ctx.user_id)
             if _u is None or _u.get("is_banned"):
                 raise AccessDeniedError("registration required")
-            await self.db.users.touch(ctx)
         if trigger.get("admin_only") or flow.get("admin_only"):
             if not ctx.is_admin:
                 raise AccessDeniedError("admin-only command")
