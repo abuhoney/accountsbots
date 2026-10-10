@@ -21,7 +21,6 @@ from telegram.ext import (
 from bot import config as cfg
 from bot.engine import Ctx
 from bot.flows import MENU_COMMANDS, TRIGGERS
-from bot.handlers import callbacks, commands, errors, messages
 
 
 _RESERVED_COMMANDS = {"cancel", "back", "language", "start", "help"}
@@ -153,6 +152,11 @@ def _media_of(message) -> dict:
     if getattr(message, "contact", None):
         media["phone_number"] = message.contact.phone_number or ""
     return media
+
+
+# Imported AFTER build_ctx and helpers are defined: the submodules import
+# build_ctx from this package, so it must already exist on the module.
+from bot.handlers import callbacks, commands, errors, messages  # noqa: E402
 
 
 def register_all(app: Application, engine) -> int:
