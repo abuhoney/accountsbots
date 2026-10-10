@@ -1,0 +1,4286 @@
+{
+  "schemaVersion": 2,
+  "meta": {
+    "projectName": "Telegram Accounts Marketplace",
+    "projectSlug": "accounts_market",
+    "description": "منصة بيع وشراء حسابات/اشتراكات تيليجرام مع ضمان (Escrow) ولوحة إدارة — patched against master_bot_maker.html audit (17-error fix)",
+    "author": "Your Name",
+    "createdAt": "2026-10-06T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "targetPython": "3.11.9",
+    "targetLayer": 214
+  },
+  "libraries": {
+    "primary": "python-telegram-bot",
+    "also_generate": [],
+    "botType": "bot"
+  },
+  "databases": {
+    "primary": "postgresql",
+    "fallbackInMemory": true,
+    "sqlitePath": "./data/bot.db",
+    "postgresUrl": "",
+    "mysqlUrl": "",
+    "mongoUri": "",
+    "redisUrl": "",
+    "firebaseProjectId": "",
+    "firebaseCredPath": "./data/firebase.json",
+    "rtdbUrl": "",
+    "supabaseUrl": "",
+    "supabaseKeyVar": "SUPABASE_KEY",
+    "appwriteEndpoint": "",
+    "appwriteProjectId": "",
+    "appwriteKeyVar": "APPWRITE_KEY",
+    "customApiBase": "",
+    "customApiTokenVar": "CUSTOM_API_TOKEN",
+    "customApiSpec": "",
+    "tables": [
+      {
+        "name": "accounts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "seller_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "length": 200,
+            "nullable": false,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "country",
+            "type": "string",
+            "length": 8,
+            "nullable": false,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "account_age_days",
+            "type": "int",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "subscribers_count",
+            "type": "int",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "is_premium",
+            "type": "bool",
+            "nullable": false,
+            "unique": false,
+            "default": false
+          },
+          {
+            "name": "has_2fa",
+            "type": "bool",
+            "nullable": false,
+            "unique": false,
+            "default": false
+          },
+          {
+            "name": "phone_prefix",
+            "type": "string",
+            "length": 8,
+            "nullable": false,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "price_stars",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "category",
+            "type": "enum",
+            "enumValues": [
+              "account",
+              "channel",
+              "bot",
+              "premium_gift",
+              "username"
+            ],
+            "nullable": false,
+            "unique": false,
+            "default": "account"
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "enumValues": [
+              "draft",
+              "pending_review",
+              "active",
+              "reserved",
+              "sold",
+              "cancelled",
+              "rejected"
+            ],
+            "nullable": false,
+            "unique": false,
+            "default": "draft"
+          },
+          {
+            "name": "screenshots",
+            "type": "json",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "session_encrypted",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "view_count",
+            "type": "int",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "published_at",
+            "type": "datetime",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [
+          {
+            "name": "ix_accounts_status",
+            "columns": [
+              "status"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_accounts_category",
+            "columns": [
+              "category"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_accounts_price",
+            "columns": [
+              "price_stars"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_accounts_seller",
+            "columns": [
+              "seller_id"
+            ],
+            "unique": false
+          }
+        ],
+        "softDelete": true,
+        "timestamps": true,
+        "tenantScope": "global"
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "account_id",
+            "type": "int",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "buyer_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "seller_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "price_stars",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "fee_stars",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "net_to_seller_stars",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "enumValues": [
+              "created",
+              "awaiting_payment",
+              "paid_escrow",
+              "delivered",
+              "confirmed",
+              "disputed",
+              "refunded",
+              "cancelled"
+            ],
+            "nullable": false,
+            "unique": false,
+            "default": "created"
+          },
+          {
+            "name": "escrow_charge_id",
+            "type": "string",
+            "length": 128,
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "buyer_confirmed_at",
+            "type": "datetime",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "seller_paid_at",
+            "type": "datetime",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "dispute_reason",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "notes",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [
+          {
+            "name": "ix_orders_buyer",
+            "columns": [
+              "buyer_id"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_orders_seller",
+            "columns": [
+              "seller_id"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_orders_status",
+            "columns": [
+              "status"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_orders_account",
+            "columns": [
+              "account_id"
+            ],
+            "unique": false
+          }
+        ],
+        "softDelete": false,
+        "timestamps": true,
+        "tenantScope": "global"
+      },
+      {
+        "name": "reviews",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "order_id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "buyer_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "seller_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "rating",
+            "type": "int",
+            "nullable": false,
+            "unique": false,
+            "default": 5
+          },
+          {
+            "name": "comment",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [
+          {
+            "name": "ix_reviews_seller",
+            "columns": [
+              "seller_id"
+            ],
+            "unique": false
+          }
+        ],
+        "softDelete": false,
+        "timestamps": true,
+        "tenantScope": "global"
+      },
+      {
+        "name": "disputes",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "order_id",
+            "type": "int",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "opened_by",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "reason",
+            "type": "text",
+            "nullable": false,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "evidence",
+            "type": "json",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "enumValues": [
+              "open",
+              "seller_responded",
+              "resolved_buyer",
+              "resolved_seller",
+              "escalated"
+            ],
+            "nullable": false,
+            "unique": false,
+            "default": "open"
+          },
+          {
+            "name": "resolution_note",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [
+          {
+            "name": "ix_disputes_status",
+            "columns": [
+              "status"
+            ],
+            "unique": false
+          }
+        ],
+        "softDelete": false,
+        "timestamps": true,
+        "tenantScope": "global"
+      },
+      {
+        "name": "wallets",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "balance_stars",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "locked_stars",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "lifetime_earned",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "lifetime_spent",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [
+          {
+            "name": "ix_wallets_user",
+            "columns": [
+              "user_id"
+            ],
+            "unique": true
+          }
+        ],
+        "softDelete": false,
+        "timestamps": true,
+        "tenantScope": "global"
+      },
+      {
+        "name": "wallet_tx",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "kind",
+            "type": "enum",
+            "enumValues": [
+              "topup",
+              "withdraw",
+              "escrow_lock",
+              "escrow_release",
+              "escrow_refund",
+              "fee",
+              "bonus"
+            ],
+            "nullable": false,
+            "unique": false,
+            "default": "topup"
+          },
+          {
+            "name": "amount",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "order_id",
+            "type": "int",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "charge_id",
+            "type": "string",
+            "length": 128,
+            "nullable": true,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "balance_after",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": 0
+          },
+          {
+            "name": "note",
+            "type": "string",
+            "length": 200,
+            "nullable": true,
+            "unique": false,
+            "default": null
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [
+          {
+            "name": "ix_wallet_tx_user",
+            "columns": [
+              "user_id"
+            ],
+            "unique": false
+          },
+          {
+            "name": "ix_wallet_tx_order",
+            "columns": [
+              "order_id"
+            ],
+            "unique": false
+          }
+        ],
+        "softDelete": false,
+        "timestamps": true,
+        "tenantScope": "global"
+      },
+      {
+        "name": "support_tickets",
+        "columns": [
+          {
+            "name": "id",
+            "type": "int",
+            "nullable": false,
+            "unique": true,
+            "default": null
+          },
+          {
+            "name": "user_id",
+            "type": "bigint",
+            "nullable": false,
+            "unique": false,
+            "default": null
+          },
+          {
+            "name": "subject",
+            "type": "string",
+            "length": 200,
+            "nullable": false,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "message",
+            "type": "text",
+            "nullable": false,
+            "unique": false,
+            "default": ""
+          },
+          {
+            "name": "status",
+            "type": "enum",
+            "enumValues": [
+              "open",
+              "answered",
+              "closed"
+            ],
+            "nullable": false,
+            "unique": false,
+            "default": "open"
+          },
+          {
+            "name": "admin_reply",
+            "type": "text",
+            "nullable": true,
+            "unique": false,
+            "default": null
+          }
+        ],
+        "primaryKey": "id",
+        "indexes": [],
+        "softDelete": false,
+        "timestamps": true,
+        "tenantScope": "user"
+      }
+    ]
+  },
+  "env": [
+    {
+      "name": "BOT_TOKEN",
+      "description": "توكن البوت من @BotFather",
+      "required": true,
+      "default": "",
+      "secret": true,
+      "validate": "string",
+      "auto": true
+    },
+    {
+      "name": "ADMINS",
+      "description": "معرّفات المشرفين مفصولة بفواصل",
+      "required": true,
+      "default": "",
+      "secret": false,
+      "validate": "string",
+      "auto": true
+    },
+    {
+      "name": "LOG_LEVEL",
+      "description": "مستوى السجلات",
+      "required": false,
+      "default": "INFO",
+      "secret": false,
+      "validate": "string",
+      "auto": true
+    },
+    {
+      "name": "DATABASE_URL",
+      "description": "postgresql+asyncpg://user:pass@host:5432/accounts_market",
+      "required": true,
+      "default": "",
+      "secret": true,
+      "validate": "url",
+      "auto": true
+    },
+    {
+      "name": "ESCROW_STARS_PROVIDER_TOKEN",
+      "description": "توكن مزود الدفع للـ Stars (اختياري — Stars لا تحتاجه)",
+      "required": false,
+      "default": "",
+      "secret": true,
+      "validate": "string",
+      "auto": false
+    },
+    {
+      "name": "PLATFORM_FEE_PERCENT",
+      "description": "نسبة عمولة المنصة (مثلاً 10 = 10%)",
+      "required": false,
+      "default": "10",
+      "secret": false,
+      "validate": "int",
+      "auto": false
+    },
+    {
+      "name": "SUPPORT_CHAT_ID",
+      "description": "معرّف مجموعة الدعم الفني (مثل -1001234567890)",
+      "required": true,
+      "default": "",
+      "secret": false,
+      "validate": "string",
+      "auto": false
+    },
+    {
+      "name": "REVIEWS_CHANNEL_ID",
+      "description": "قناة نشر التقييمات (اختياري)",
+      "required": false,
+      "default": "",
+      "secret": false,
+      "validate": "string",
+      "auto": false
+    },
+    {
+      "name": "SESSION_ENCRYPTION_KEY",
+      "description": "مفتاح تشفير جلسات الحسابات (Fernet base64) — أنشئه عبر: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"",
+      "required": true,
+      "default": "",
+      "secret": true,
+      "validate": "string",
+      "auto": false
+    },
+    {
+      "name": "MIN_LISTING_PRICE",
+      "description": "أدنى سعر لعرض (بالنجوم)",
+      "required": false,
+      "default": "100",
+      "secret": false,
+      "validate": "int",
+      "auto": false
+    },
+    {
+      "name": "MAX_LISTING_PRICE",
+      "description": "أقصى سعر لعرض",
+      "required": false,
+      "default": "50000",
+      "secret": false,
+      "validate": "int",
+      "auto": false
+    },
+    {
+      "name": "AUTO_RELEASE_HOURS",
+      "description": "ساعات الإفراج التلقائي عن الضمان إذا لم يشتكِ المشتري",
+      "required": false,
+      "default": "72",
+      "secret": false,
+      "validate": "int",
+      "auto": false
+    }
+  ],
+  "pythonLibs": [
+    "cryptography==42.0.8",
+    "python-jose==3.3.0",
+    "passlib==1.7.4"
+  ],
+  "languages": [
+    "ar",
+    "en",
+    "ru"
+  ],
+  "strings": {
+    "en": {
+      "menu.title": "🛒 <b>Accounts Marketplace</b>\n\nBuy and sell Telegram accounts, channels, and usernames safely with escrow protection.",
+      "menu.browse": "🛍 Browse listings",
+      "menu.sell": "📤 Sell an account",
+      "menu.my_listings": "📦 My listings",
+      "menu.my_orders": "🧾 My orders",
+      "menu.wallet": "💎 Wallet",
+      "menu.support": "🆘 Support",
+      "menu.profile": "👤 Profile",
+      "menu.admin": "🛡 Admin panel",
+      "menu.lang": "🌐 Language",
+      "menu.back": "← Back",
+      "menu.cancel": "❌ Cancel",
+      "menu.close": "✖ Close",
+      "list.none": "No listings match your filters.",
+      "order.created": "Order #{id} created. Total: {total} ⭐ (fee {fee} ⭐).",
+      "order.paid": "✅ Payment received. The seller has 24h to deliver.",
+      "order.confirmed": "🎉 Order #{id} confirmed. Funds released to seller.",
+      "wallet.balance": "💎 Balance: {balance} ⭐\n🔒 Locked in escrow: {locked} ⭐",
+      "error.generic": "⚠️ Something went wrong (ref {error_id}). The team was notified.",
+      "rate.slow": "⏳ Slow down. Try again in {retry}s.",
+      "listing.pending_review": "⏳ Your listing is under review. We'll notify you within 24 hours."
+    },
+    "ar": {
+      "menu.title": "🛒 <b>سوق الحسابات</b>\n\nاشترِ وبِع حسابات وقنوات وأسماء تيليجرام بأمان تام مع نظام الضمان (Escrow).",
+      "menu.browse": "🛍 تصفّح المعروضات",
+      "menu.sell": "📤 اعرض حسابك للبيع",
+      "menu.my_listings": "📦 معروضاتي",
+      "menu.my_orders": "🧾 طلباتي",
+      "menu.wallet": "💎 محفظتي",
+      "menu.support": "🆘 الدعم الفني",
+      "menu.profile": "👤 ملفي",
+      "menu.admin": "🛡 لوحة الإدارة",
+      "menu.lang": "🌐 اللغة",
+      "menu.back": "← رجوع",
+      "menu.cancel": "❌ إلغاء",
+      "menu.close": "✖ إغلاق",
+      "list.none": "لا توجد معروضات مطابقة للفلاتر.",
+      "order.created": "تم إنشاء الطلب #{id}. الإجمالي: {total} ⭐ (عمولة {fee} ⭐).",
+      "order.paid": "✅ تم استلام الدفع. أمام البائع 24 ساعة للتسليم.",
+      "order.confirmed": "🎉 تم تأكيد الطلب #{id}. تم تحويل المبلغ للبائع.",
+      "wallet.balance": "💎 الرصيد: {balance} ⭐\n🔒 محجوز في الضمان: {locked} ⭐",
+      "error.generic": "⚠️ حدث خطأ ما (مرجع {error_id}). تم إبلاغ الفريق.",
+      "rate.slow": "⏳ تهدّأ قليلاً. أعد المحاولة بعد {retry} ثانية.",
+      "listing.pending_review": "⏳ معروضك قيد المراجعة. سنبلغك خلال 24 ساعة."
+    },
+    "ru": {
+      "menu.title": "🛒 <b>Маркетплейс аккаунтов</b>\n\nПокупайте и продавайте аккаунты Telegram, каналы и юзернеймы с гарантией (эскроу).",
+      "menu.browse": "🛍 Просмотр объявлений",
+      "menu.sell": "📤 Продать аккаунт",
+      "menu.my_listings": "📦 Мои объявления",
+      "menu.my_orders": "🧾 Мои заказы",
+      "menu.wallet": "💎 Кошелёк",
+      "menu.support": "🆘 Поддержка",
+      "menu.profile": "👤 Профиль",
+      "menu.admin": "🛡 Админ-панель",
+      "menu.lang": "🌐 Язык",
+      "menu.back": "← Назад",
+      "menu.cancel": "❌ Отмена",
+      "menu.close": "✖ Закрыть",
+      "list.none": "Нет объявлений по вашим фильтрам.",
+      "order.created": "Заказ #{id} создан. Итого: {total} ⭐ (комиссия {fee} ⭐).",
+      "order.paid": "✅ Оплата получена. У продавца 24 часа на передачу.",
+      "order.confirmed": "🎉 Заказ #{id} подтверждён. Средства переведены продавцу.",
+      "wallet.balance": "💎 Баланс: {balance} ⭐\n🔒 В эскроу: {locked} ⭐",
+      "error.generic": "⚠️ Произошла ошибка (код {error_id}). Мы уведомлены.",
+      "rate.slow": "⏳ Слишком часто. Повторите через {retry} сек.",
+      "listing.pending_review": "⏳ Ваше объявление на проверке. Мы уведомим вас в течение 24 часов."
+    }
+  },
+  "commands": [
+    {
+      "id": "cmd_start",
+      "name": "start",
+      "description": "القائمة الرئيسية",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_browse",
+      "name": "browse",
+      "description": "تصفّح المعروضات",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_sell",
+      "name": "sell",
+      "description": "اعرض حسابك للبيع",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_orders",
+      "name": "orders",
+      "description": "طلباتي",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_wallet",
+      "name": "wallet",
+      "description": "محفظتي",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_support",
+      "name": "support",
+      "description": "الدعم الفني",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_cancel",
+      "name": "cancel",
+      "description": "إلغاء العملية",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_help",
+      "name": "help",
+      "description": "المساعدة",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_admin",
+      "name": "admin",
+      "description": "لوحة الإدارة",
+      "scope": "any",
+      "addToMenu": true
+    },
+    {
+      "id": "cmd_dispute",
+      "name": "dispute",
+      "description": "فتح نزاع",
+      "scope": "any",
+      "addToMenu": true
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_main_menu",
+      "name": "Main Menu",
+      "message": "{t:menu.title}",
+      "parseMode": "HTML",
+      "mediaType": "",
+      "mediaSource": "",
+      "buttons": [
+        [
+          {
+            "id": "btn_browse",
+            "text": "{t:menu.browse}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_browse"
+          },
+          {
+            "id": "btn_sell",
+            "text": "{t:menu.sell}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_sell_start"
+          }
+        ],
+        [
+          {
+            "id": "btn_my_lis",
+            "text": "{t:menu.my_listings}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_my_listings"
+          },
+          {
+            "id": "btn_my_ord",
+            "text": "{t:menu.my_orders}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_my_orders"
+          }
+        ],
+        [
+          {
+            "id": "btn_wallet",
+            "text": "{t:menu.wallet}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_wallet"
+          },
+          {
+            "id": "btn_support",
+            "text": "{t:menu.support}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_support"
+          }
+        ],
+        [
+          {
+            "id": "btn_profile",
+            "text": "{t:menu.profile}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_profile"
+          },
+          {
+            "id": "btn_admin",
+            "text": "{t:menu.admin}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_admin",
+            "visibleIf": "ctx.is_admin"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "scr_browse",
+      "name": "Browse Listings",
+      "message": "🛍 <b>تصفّح المعروضات</b>\n\nاختر الفئة للتصفية:",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_cat_acc",
+            "text": "👤 حسابات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "cat:account"
+          },
+          {
+            "id": "btn_cat_ch",
+            "text": "📢 قنوات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "cat:channel"
+          }
+        ],
+        [
+          {
+            "id": "btn_cat_bot",
+            "text": "🤖 بوتات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "cat:bot"
+          },
+          {
+            "id": "btn_cat_prem",
+            "text": "⭐ بريميوم",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "cat:premium_gift"
+          }
+        ],
+        [
+          {
+            "id": "btn_cat_un",
+            "text": "📛 يوزرات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "cat:username"
+          },
+          {
+            "id": "btn_sort_price",
+            "text": "💎 الأرخص أولاً",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "sort:price_asc"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_main",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_sell_start",
+      "name": "Sell — Start",
+      "message": "📤 <b>عرض حساب للبيع</b>\n\nسيتم سؤالك عن تفاصيل الحساب خطوة بخطوة.\n\n⚠️ <b>مهم:</b> يتم تشفير بيانات الجلسة قبل التخزين. لا يُسلَّم شيء للمشتري حتى تدفع المنصة.",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_sell_go",
+            "text": "▶️ ابدأ",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "sell:start"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_main2",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_my_listings",
+      "name": "My Listings",
+      "message": "📦 <b>معروضاتي</b>\n\n{my_listings_summary}",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_new_listing",
+            "text": "➕ معروض جديد",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_sell_start"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_my3",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_my_orders",
+      "name": "My Orders",
+      "message": "🧾 <b>طلباتي</b>\n\n{my_orders_summary}",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_back_my4",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_wallet",
+      "name": "Wallet",
+      "message": "{t:wallet.balance}",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_topup",
+            "text": "➕ إيداع نجوم",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "wallet:topup"
+          },
+          {
+            "id": "btn_withdraw",
+            "text": "💸 سحب",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "wallet:withdraw"
+          }
+        ],
+        [
+          {
+            "id": "btn_history",
+            "text": "📜 سجل العمليات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "wallet:history"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_my5",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_support",
+      "name": "Support",
+      "message": "🆘 <b>الدعم الفني</b>\n\nأرسل استفسارك وسيرد عليك فريقنا في أقرب وقت.",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_open_ticket",
+            "text": "📨 فتح تذكرة",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "support:new"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_my6",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_profile",
+      "name": "Profile",
+      "message": "👤 <b>ملفي</b>\n\nالاسم: {ctx.first_name}\nالمعرّف: <code>{ctx.user_id}</code>\nاللغة: {ctx.language}\n\nنقاط البائع: {seller_rating} ⭐ ({reviews_count} تقييم)",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_lang",
+            "text": "{t:menu.lang}",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "profile:lang"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_my7",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    },
+    {
+      "id": "scr_admin",
+      "name": "Admin Panel",
+      "message": "🛡 <b>لوحة الإدارة</b>\n\nاختر العملية:",
+      "parseMode": "HTML",
+      "buttons": [
+        [
+          {
+            "id": "btn_adm_pending",
+            "text": "⏳ قيد المراجعة",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "admin:pending"
+          },
+          {
+            "id": "btn_adm_disputes",
+            "text": "⚖️ نزاعات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "admin:disputes"
+          }
+        ],
+        [
+          {
+            "id": "btn_adm_stats",
+            "text": "📊 إحصائيات",
+            "kind": "inline",
+            "action": "callback",
+            "callbackData": "admin:stats"
+          }
+        ],
+        [
+          {
+            "id": "btn_back_my8",
+            "text": "{t:menu.back}",
+            "kind": "inline",
+            "action": "navigate",
+            "targetScreenId": "scr_main_menu"
+          }
+        ]
+      ],
+      "backable": true
+    }
+  ],
+  "triggers": [
+    {
+      "id": "trg_start",
+      "name": "/start",
+      "kind": "command",
+      "pattern": "start",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_main_menu"
+    },
+    {
+      "id": "trg_browse",
+      "name": "/browse",
+      "kind": "command",
+      "pattern": "browse",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_browse_menu"
+    },
+    {
+      "id": "trg_sell",
+      "name": "/sell",
+      "kind": "command",
+      "pattern": "sell",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_sell_start"
+    },
+    {
+      "id": "trg_orders",
+      "name": "/orders",
+      "kind": "command",
+      "pattern": "orders",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_my_orders"
+    },
+    {
+      "id": "trg_wallet",
+      "name": "/wallet",
+      "kind": "command",
+      "pattern": "wallet",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_wallet"
+    },
+    {
+      "id": "trg_support",
+      "name": "/support",
+      "kind": "command",
+      "pattern": "support",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_support"
+    },
+    {
+      "id": "trg_admin",
+      "name": "/admin",
+      "kind": "command",
+      "pattern": "admin",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": true,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_admin_menu"
+    },
+    {
+      "id": "trg_dispute",
+      "name": "/dispute",
+      "kind": "command",
+      "pattern": "dispute",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_dispute"
+    },
+    {
+      "id": "trg_buy_cb",
+      "name": "buy-callback",
+      "kind": "callback",
+      "pattern": "buy:",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_buy"
+    },
+    {
+      "id": "trg_wallet_topup",
+      "name": "wallet topup",
+      "kind": "successful_payment",
+      "pattern": "topup",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_topup_success"
+    },
+    {
+      "id": "trg_order_payment",
+      "name": "order payment",
+      "kind": "successful_payment",
+      "pattern": "order:",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_order_paid"
+    },
+    {
+      "id": "trg_cat",
+      "name": "browse category",
+      "kind": "callback",
+      "pattern": "cat:",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_browse_filter"
+    },
+    {
+      "id": "trg_sort",
+      "name": "browse sort",
+      "kind": "callback",
+      "pattern": "sort:",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_browse_filter"
+    },
+    {
+      "id": "trg_wallet_topup_btn",
+      "name": "wallet topup btn",
+      "kind": "callback",
+      "pattern": "wallet:topup",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_wallet_topup"
+    },
+    {
+      "id": "trg_wallet_withdraw_btn",
+      "name": "wallet withdraw btn",
+      "kind": "callback",
+      "pattern": "wallet:withdraw",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_wallet_withdraw"
+    },
+    {
+      "id": "trg_wallet_history_btn",
+      "name": "wallet history btn",
+      "kind": "callback",
+      "pattern": "wallet:history",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_wallet_history"
+    },
+    {
+      "id": "trg_support_new",
+      "name": "support new ticket",
+      "kind": "callback",
+      "pattern": "support:new",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_support_ticket"
+    },
+    {
+      "id": "trg_profile_lang",
+      "name": "profile language",
+      "kind": "callback",
+      "pattern": "profile:lang",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_profile_lang"
+    },
+    {
+      "id": "trg_admin_pending",
+      "name": "admin pending",
+      "kind": "callback",
+      "pattern": "admin:pending",
+      "filters": [],
+      "scope": "admin",
+      "adminOnly": true,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_admin_pending"
+    },
+    {
+      "id": "trg_admin_disputes",
+      "name": "admin disputes",
+      "kind": "callback",
+      "pattern": "admin:disputes",
+      "filters": [],
+      "scope": "admin",
+      "adminOnly": true,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_admin_disputes"
+    },
+    {
+      "id": "trg_admin_stats",
+      "name": "admin stats",
+      "kind": "callback",
+      "pattern": "admin:stats",
+      "filters": [],
+      "scope": "admin",
+      "adminOnly": true,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 0,
+      "flowId": "flw_admin_stats"
+    },
+    {
+      "id": "trg_sell_start_btn",
+      "name": "sell wizard start",
+      "kind": "callback",
+      "pattern": "sell:start",
+      "filters": [],
+      "scope": "any",
+      "adminOnly": false,
+      "premiumOnly": false,
+      "subscribeToChannels": [],
+      "cooldownSeconds": 30,
+      "flowId": "flw_sell_start"
+    }
+  ],
+  "flows": [
+    {
+      "id": "flw_main_menu",
+      "name": "Main Menu",
+      "entryTriggerId": "trg_start",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_main_entry",
+      "nodes": [
+        {
+          "id": "nd_main_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_main_ensure_wallet",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_main_ensure_wallet",
+          "type": "DB_QUERY",
+          "label": "Ensure wallet exists",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_main_screen",
+          "nextIf": {},
+          "cfg": {
+            "op": "insert",
+            "table": "wallets",
+            "fields": {
+              "user_id": "@ctx.user_id",
+              "balance_stars": 0,
+              "locked_stars": 0
+            },
+            "resultVar": "wallet_id"
+          }
+        },
+        {
+          "id": "nd_main_screen",
+          "type": "SCREEN",
+          "label": "Main menu",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_main_end",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_main_menu"
+          }
+        },
+        {
+          "id": "nd_main_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_main_entry",
+          "to": "nd_main_ensure_wallet"
+        },
+        {
+          "from": "nd_main_ensure_wallet",
+          "to": "nd_main_screen"
+        },
+        {
+          "from": "nd_main_screen",
+          "to": "nd_main_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_browse_menu",
+      "name": "Browse",
+      "entryTriggerId": "trg_browse",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_br_entry",
+      "nodes": [
+        {
+          "id": "nd_br_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_br_screen",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_br_screen",
+          "type": "SCREEN",
+          "label": "Browse categories",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_br_wait",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_browse"
+          }
+        },
+        {
+          "id": "nd_br_wait",
+          "type": "SEND_AND_WAIT",
+          "label": "Wait for category",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_br_end",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_browse",
+            "expect": "callback",
+            "variable": "browse_filter",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_br_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_br_entry",
+          "to": "nd_br_screen"
+        },
+        {
+          "from": "nd_br_screen",
+          "to": "nd_br_wait"
+        },
+        {
+          "from": "nd_br_wait",
+          "to": "nd_br_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_buy",
+      "name": "Buy Account",
+      "entryTriggerId": "trg_buy_cb",
+      "backable": false,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_buy_entry",
+      "nodes": [
+        {
+          "id": "nd_buy_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_buy_parse",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_buy_parse",
+          "type": "COMPUTE",
+          "label": "Parse account_id from callback",
+          "position": {
+            "x": 40,
+            "y": 100
+          },
+          "next": "nd_buy_fetch",
+          "nextIf": {},
+          "cfg": {
+            "variable": "account_id",
+            "expression": "@expr.int(@expr.re_group('account_id', @ctx.callback_data))"
+          }
+        },
+        {
+          "id": "nd_buy_fetch",
+          "type": "DB_QUERY",
+          "label": "Fetch account",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_buy_check_status",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "accounts",
+            "where": {
+              "id": "@input.account_id"
+            },
+            "limit": 1,
+            "resultVar": "account_row"
+          }
+        },
+        {
+          "id": "nd_buy_check_status",
+          "type": "COMPUTE",
+          "label": "Extract price & seller",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_buy_fee",
+          "nextIf": {},
+          "cfg": {
+            "variable": "price",
+            "expression": "@expr.int(@input.account_row[0][\"price_stars\"])"
+          }
+        },
+        {
+          "id": "nd_buy_fee",
+          "type": "COMPUTE",
+          "label": "Compute platform fee",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_buy_total",
+          "nextIf": {},
+          "cfg": {
+            "variable": "fee",
+            "expression": "@expr.int(@input.price * int(@env.PLATFORM_FEE_PERCENT) / 100)"
+          }
+        },
+        {
+          "id": "nd_buy_total",
+          "type": "COMPUTE",
+          "label": "Total",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": "nd_buy_show_confirm",
+          "nextIf": {},
+          "cfg": {
+            "variable": "total",
+            "expression": "@input.price + @input.fee"
+          }
+        },
+        {
+          "id": "nd_buy_show_confirm",
+          "type": "MESSAGE",
+          "label": "Show confirmation",
+          "position": {
+            "x": 40,
+            "y": 720
+          },
+          "next": "nd_buy_invoice",
+          "nextIf": {},
+          "cfg": {
+            "text": "🛒 <b>تأكيد الشراء</b>\n\nالعرض: {account_row[0][\"title\"]}\nالسعر: {price} ⭐\nعمولة المنصة: {fee} ⭐\n<b>الإجمالي: {total} ⭐</b>\n\n⚠️ <b>سيتم حجز المبلغ في الضمان</b> ولن يُسلَّم للبائع حتى تؤكّد استلامك.",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_buy_invoice",
+          "type": "PAYMENT",
+          "label": "Send invoice",
+          "position": {
+            "x": 40,
+            "y": 860
+          },
+          "next": "nd_buy_end",
+          "nextIf": {},
+          "cfg": {
+            "stars": true,
+            "currency": "XTR",
+            "amount": "@input.total",
+            "title": "شراء حساب تيليجرام",
+            "description": "دفع مضمون عبر الضمان",
+            "payload": "order:acct:{account_id}",
+            "startParam": "escrow_order"
+          }
+        },
+        {
+          "id": "nd_buy_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 1000
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_buy_entry",
+          "to": "nd_buy_parse"
+        },
+        {
+          "from": "nd_buy_parse",
+          "to": "nd_buy_fetch"
+        },
+        {
+          "from": "nd_buy_fetch",
+          "to": "nd_buy_check_status"
+        },
+        {
+          "from": "nd_buy_check_status",
+          "to": "nd_buy_fee"
+        },
+        {
+          "from": "nd_buy_fee",
+          "to": "nd_buy_total"
+        },
+        {
+          "from": "nd_buy_total",
+          "to": "nd_buy_show_confirm"
+        },
+        {
+          "from": "nd_buy_show_confirm",
+          "to": "nd_buy_invoice"
+        },
+        {
+          "from": "nd_buy_invoice",
+          "to": "nd_buy_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_order_paid",
+      "name": "Order Paid (Escrow Locked)",
+      "entryTriggerId": "trg_order_payment",
+      "backable": false,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_op_entry",
+      "nodes": [
+        {
+          "id": "nd_op_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_op_parse_payload",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_op_parse_payload",
+          "type": "COMPUTE",
+          "label": "Parse account_id from payload",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_op_create_order",
+          "nextIf": {},
+          "cfg": {
+            "variable": "account_id",
+            "expression": "@expr.int(@expr.re_group('account_id', @ctx.payment.payload, 'order:acct:(\\\\d+)'))"
+          }
+        },
+        {
+          "id": "nd_op_create_order",
+          "type": "DB_QUERY",
+          "label": "Create order",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_op_lock_escrow",
+          "nextIf": {},
+          "cfg": {
+            "op": "insert",
+            "table": "orders",
+            "fields": {
+              "account_id": "@input.account_id",
+              "buyer_id": "@ctx.user_id",
+              "price_stars": "@ctx.payment.amount",
+              "status": "paid_escrow",
+              "escrow_charge_id": "@ctx.payment.charge_id"
+            },
+            "resultVar": "order_id"
+          }
+        },
+        {
+          "id": "nd_op_lock_escrow",
+          "type": "MESSAGE",
+          "label": "Notify buyer",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_op_notify_seller",
+          "nextIf": {},
+          "cfg": {
+            "text": "✅ <b>تم استلام دفعك</b>\n\nرقم الطلب: #{order_id}\n\n📌 البائع ملزَم بتسليم بيانات الحساب خلال <b>24 ساعة</b>.\nإذا لم يستجب، سيُسترد المبلغ تلقائياً.\n\n🆘 استخدم /dispute إذا واجهت مشكلة.",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_op_notify_seller",
+          "type": "MESSAGE",
+          "label": "DM buyer (TODO: route to seller)",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": "nd_op_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "🔔 <b>طلب جديد على معروضك!</b>\n\nرقم الطلب: #{order_id}\nالمبلغ المحجوز: {ctx.payment.amount} ⭐\n\n📌 سلّم بيانات الحساب للمشتري خلال 24 ساعة لتحصل على المبلغ.\nاستخدم: /deliver {order_id}",
+            "parseMode": "HTML",
+            "chatId": "@ctx.user_id"
+          }
+        },
+        {
+          "id": "nd_op_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 720
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_op_entry",
+          "to": "nd_op_parse_payload"
+        },
+        {
+          "from": "nd_op_parse_payload",
+          "to": "nd_op_create_order"
+        },
+        {
+          "from": "nd_op_create_order",
+          "to": "nd_op_lock_escrow"
+        },
+        {
+          "from": "nd_op_lock_escrow",
+          "to": "nd_op_notify_seller"
+        },
+        {
+          "from": "nd_op_notify_seller",
+          "to": "nd_op_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_sell_start",
+      "name": "Sell — Wizard",
+      "entryTriggerId": "trg_sell",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 30,
+      "startNodeId": "nd_sell_entry",
+      "nodes": [
+        {
+          "id": "nd_sell_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_sell_category",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_sell_category",
+          "type": "ASK",
+          "label": "Category",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_sell_title",
+          "nextIf": {},
+          "cfg": {
+            "variable": "category",
+            "prompt": "1️⃣ ما نوع ما تعرضه؟\n\nأرسل واحداً من:\n• <code>account</code> — حساب\n• <code>channel</code> — قناة\n• <code>bot</code> — بوت\n• <code>premium_gift</code> — هدية بريميوم\n• <code>username</code> — يوزر",
+            "inputType": "text",
+            "validation": "^(account|channel|bot|premium_gift|username)$",
+            "errorMessage": "❌ قيمة غير صحيحة. أرسل واحدة من القيم المذكورة.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_title",
+          "type": "ASK",
+          "label": "Title",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_sell_desc",
+          "nextIf": {},
+          "cfg": {
+            "variable": "title",
+            "prompt": "2️⃣ أرسل عنواناً جاذباً للعرض (3-100 حرف):",
+            "inputType": "text",
+            "validation": "^.{3,100}$",
+            "errorMessage": "❌ العنوان يجب أن يكون بين 3 و100 حرف.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_desc",
+          "type": "ASK",
+          "label": "Description",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_sell_price",
+          "nextIf": {},
+          "cfg": {
+            "variable": "description",
+            "prompt": "3️⃣ أرسل وصفاً تفصيلياً (10-1500 حرف):",
+            "inputType": "text",
+            "validation": "^.{10,1500}$",
+            "errorMessage": "❌ الوصف يجب أن يكون بين 10 و1500 حرف.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_price",
+          "type": "ASK",
+          "label": "Price",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": "nd_sell_validate_price",
+          "nextIf": {},
+          "cfg": {
+            "variable": "price_input",
+            "prompt": "4️⃣ أرسل السعر بالنجوم ⭐ (بين 100 و 50000):",
+            "inputType": "number",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_validate_price",
+          "type": "COMPUTE",
+          "label": "Validate price",
+          "position": {
+            "x": 40,
+            "y": 720
+          },
+          "next": "nd_sell_check_min",
+          "nextIf": {},
+          "cfg": {
+            "variable": "price",
+            "expression": "int(@input.price_input)"
+          }
+        },
+        {
+          "id": "nd_sell_check_min",
+          "type": "CONDITION",
+          "label": "price >= MIN?",
+          "position": {
+            "x": 40,
+            "y": 860
+          },
+          "next": "nd_sell_check_max",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_sell_check_max",
+          "type": "CONDITION",
+          "label": "price <= MAX?",
+          "position": {
+            "x": 40,
+            "y": 1000
+          },
+          "next": "nd_sell_age",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_sell_reject_price",
+          "type": "MESSAGE",
+          "label": "Reject price",
+          "position": {
+            "x": 340,
+            "y": 860
+          },
+          "next": "nd_sell_end_abort",
+          "nextIf": {},
+          "cfg": {
+            "text": "❌ السعر خارج النطاق المسموح.\n\nالحد الأدنى: {env.MIN_LISTING_PRICE} ⭐\nالحد الأقصى: {env.MAX_LISTING_PRICE} ⭐\n\nأعد /sell وابدأ من جديد.",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_sell_age",
+          "type": "ASK",
+          "label": "Account age",
+          "position": {
+            "x": 40,
+            "y": 1140
+          },
+          "next": "nd_sell_country",
+          "nextIf": {},
+          "cfg": {
+            "variable": "account_age_days",
+            "prompt": "5️⃣ كم عمر الحساب بالأيام؟ (أرسل رقماً، 0 إن كنت لا تعرف)",
+            "inputType": "number",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_country",
+          "type": "ASK",
+          "label": "Country",
+          "position": {
+            "x": 40,
+            "y": 1280
+          },
+          "next": "nd_sell_phone",
+          "nextIf": {},
+          "cfg": {
+            "variable": "country",
+            "prompt": "6️⃣ رمز الدولة (مثلاً SA, EG, US):",
+            "inputType": "text",
+            "validation": "^[A-Za-z]{2}$",
+            "errorMessage": "❌ أرسل رمزاً دولياً مكوناً من حرفين (مثلاً SA).",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_phone",
+          "type": "ASK",
+          "label": "Phone prefix",
+          "position": {
+            "x": 40,
+            "y": 1420
+          },
+          "next": "nd_sell_premium",
+          "nextIf": {},
+          "cfg": {
+            "variable": "phone_prefix",
+            "prompt": "7️⃣ أول 3 أرقام من رقم الهاتف (للمعاينة فقط، لن يُنشر كاملاً):",
+            "inputType": "text",
+            "validation": "^\\+?\\d{1,4}$",
+            "errorMessage": "❌ أرسل 1-4 أرقام فقط.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_premium",
+          "type": "ASK",
+          "label": "Is Premium?",
+          "position": {
+            "x": 40,
+            "y": 1560
+          },
+          "next": "nd_sell_2fa",
+          "nextIf": {},
+          "cfg": {
+            "variable": "is_premium_str",
+            "prompt": "8️⃣ هل الحساب بريميوم؟ أرسل yes أو no:",
+            "inputType": "text",
+            "validation": "^(yes|no|نعم|لا)$",
+            "errorMessage": "❌ أرسل yes أو no.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_2fa",
+          "type": "ASK",
+          "label": "Has 2FA?",
+          "position": {
+            "x": 40,
+            "y": 1700
+          },
+          "next": "nd_sell_session",
+          "nextIf": {},
+          "cfg": {
+            "variable": "has_2fa_str",
+            "prompt": "9️⃣ هل الحساب محمي بكلمة مرور (2FA)؟ أرسل yes أو no:",
+            "inputType": "text",
+            "validation": "^(yes|no|نعم|لا)$",
+            "errorMessage": "❌ أرسل yes أو no.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sell_session",
+          "type": "ASK",
+          "label": "Session string",
+          "position": {
+            "x": 40,
+            "y": 1840
+          },
+          "next": "nd_sell_confirm",
+          "nextIf": {},
+          "cfg": {
+            "variable": "session_string",
+            "prompt": "🔐 <b>أرسل بيانات الجلسة المشفّرة</b>\n\n(سلسلة Telethon StringSession أو Pyrogram Session)\n\nسيتم تشفيرها فوراً قبل التخزين.\n\n⚠️ <b>تحذير:</b> أرسلها فقط عندما تكون مستعداً — سيتم حجزها حتى إتمام الصفقة.",
+            "inputType": "text",
+            "validation": "^.{20,}$",
+            "errorMessage": "❌ بيانات الجلسة غير صالحة.",
+            "timeoutSeconds": 900
+          }
+        },
+        {
+          "id": "nd_sell_confirm",
+          "type": "MESSAGE",
+          "label": "Confirm",
+          "position": {
+            "x": 40,
+            "y": 1980
+          },
+          "next": "nd_sell_encrypt",
+          "nextIf": {},
+          "cfg": {
+            "text": "📝 <b>مراجعة نهائية</b>\n\n• الفئة: {category}\n• العنوان: {title}\n• الوصف: {description}\n• السعر: {price} ⭐\n• العمر: {account_age_days} يوم\n• الدولة: {country}\n• بريميوم: {is_premium_str}\n• 2FA: {has_2fa_str}\n\nسيتم إرسال العرض للمراجعة الآن.",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_sell_encrypt",
+          "type": "COMPUTE",
+          "label": "Encrypt session (Fernet)",
+          "position": {
+            "x": 40,
+            "y": 2120
+          },
+          "next": "nd_sell_insert",
+          "nextIf": {},
+          "cfg": {
+            "variable": "session_encrypted",
+            "expression": "@expr.encrypt_session(@input.session_string)"
+          }
+        },
+        {
+          "id": "nd_sell_insert",
+          "type": "DB_QUERY",
+          "label": "Insert listing",
+          "position": {
+            "x": 40,
+            "y": 2260
+          },
+          "next": "nd_sell_notify_admins",
+          "nextIf": {},
+          "cfg": {
+            "op": "insert",
+            "table": "accounts",
+            "fields": {
+              "seller_id": "@ctx.user_id",
+              "title": "@input.title",
+              "description": "@input.description",
+              "country": "@input.country",
+              "account_age_days": "@input.account_age_days",
+              "is_premium": "@expr.is_yes(@input.is_premium_str)",
+              "has_2fa": "@expr.is_yes(@input.has_2fa_str)",
+              "phone_prefix": "@input.phone_prefix",
+              "price_stars": "@input.price",
+              "category": "@input.category",
+              "status": "pending_review",
+              "session_encrypted": "@input.session_encrypted"
+            },
+            "resultVar": "listing_id"
+          }
+        },
+        {
+          "id": "nd_sell_notify_admins",
+          "type": "MESSAGE",
+          "label": "Notify admins",
+          "position": {
+            "x": 40,
+            "y": 2400
+          },
+          "next": "nd_sell_confirm_user",
+          "nextIf": {},
+          "cfg": {
+            "text": "🔔 <b>عرض جديد للمراجعة</b>\n\nمعرّف: #{listing_id}\nمن: {ctx.first_name} (@{ctx.username})\nالفئة: {category}\nالسعر: {price} ⭐\n\n/approve {listing_id}\n/reject {listing_id}",
+            "parseMode": "HTML",
+            "chatId": "@env.SUPPORT_CHAT_ID"
+          }
+        },
+        {
+          "id": "nd_sell_confirm_user",
+          "type": "MESSAGE",
+          "label": "Confirm to user",
+          "position": {
+            "x": 40,
+            "y": 2540
+          },
+          "next": "nd_sell_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "{t:listing.pending_review}\n\nمعرّف العرض: #{listing_id}",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_sell_end_abort",
+          "type": "END",
+          "label": "Abort",
+          "position": {
+            "x": 340,
+            "y": 1000
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        },
+        {
+          "id": "nd_sell_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 2680
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_sell_entry",
+          "to": "nd_sell_category"
+        },
+        {
+          "from": "nd_sell_category",
+          "to": "nd_sell_title"
+        },
+        {
+          "from": "nd_sell_title",
+          "to": "nd_sell_desc"
+        },
+        {
+          "from": "nd_sell_desc",
+          "to": "nd_sell_price"
+        },
+        {
+          "from": "nd_sell_price",
+          "to": "nd_sell_validate_price"
+        },
+        {
+          "from": "nd_sell_validate_price",
+          "to": "nd_sell_check_min"
+        },
+        {
+          "from": "nd_sell_check_min",
+          "to": "nd_sell_check_max",
+          "condition": "@input.price >= int(@env.MIN_LISTING_PRICE)"
+        },
+        {
+          "from": "nd_sell_check_min",
+          "to": "nd_sell_reject_price"
+        },
+        {
+          "from": "nd_sell_check_max",
+          "to": "nd_sell_age",
+          "condition": "@input.price <= int(@env.MAX_LISTING_PRICE)"
+        },
+        {
+          "from": "nd_sell_check_max",
+          "to": "nd_sell_reject_price"
+        },
+        {
+          "from": "nd_sell_age",
+          "to": "nd_sell_country"
+        },
+        {
+          "from": "nd_sell_country",
+          "to": "nd_sell_phone"
+        },
+        {
+          "from": "nd_sell_phone",
+          "to": "nd_sell_premium"
+        },
+        {
+          "from": "nd_sell_premium",
+          "to": "nd_sell_2fa"
+        },
+        {
+          "from": "nd_sell_2fa",
+          "to": "nd_sell_session"
+        },
+        {
+          "from": "nd_sell_session",
+          "to": "nd_sell_confirm"
+        },
+        {
+          "from": "nd_sell_confirm",
+          "to": "nd_sell_encrypt"
+        },
+        {
+          "from": "nd_sell_encrypt",
+          "to": "nd_sell_insert"
+        },
+        {
+          "from": "nd_sell_insert",
+          "to": "nd_sell_notify_admins"
+        },
+        {
+          "from": "nd_sell_notify_admins",
+          "to": "nd_sell_confirm_user"
+        },
+        {
+          "from": "nd_sell_confirm_user",
+          "to": "nd_sell_end"
+        },
+        {
+          "from": "nd_sell_reject_price",
+          "to": "nd_sell_end_abort"
+        }
+      ]
+    },
+    {
+      "id": "flw_my_orders",
+      "name": "My Orders",
+      "entryTriggerId": "trg_orders",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_mo_entry",
+      "nodes": [
+        {
+          "id": "nd_mo_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_mo_fetch",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_mo_fetch",
+          "type": "DB_QUERY",
+          "label": "Fetch orders",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_mo_build_summary",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "orders",
+            "where": {
+              "buyer_id": "@ctx.user_id"
+            },
+            "orderBy": "created_at DESC",
+            "limit": 10,
+            "resultVar": "my_orders"
+          }
+        },
+        {
+          "id": "nd_mo_build_summary",
+          "type": "COMPUTE",
+          "label": "Build summary",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_mo_screen",
+          "nextIf": {},
+          "cfg": {
+            "variable": "my_orders_summary",
+            "expression": "@expr.format_orders(@input.my_orders)"
+          }
+        },
+        {
+          "id": "nd_mo_screen",
+          "type": "SCREEN",
+          "label": "Show orders",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_mo_end",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_my_orders"
+          }
+        },
+        {
+          "id": "nd_mo_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_mo_entry",
+          "to": "nd_mo_fetch"
+        },
+        {
+          "from": "nd_mo_fetch",
+          "to": "nd_mo_build_summary"
+        },
+        {
+          "from": "nd_mo_build_summary",
+          "to": "nd_mo_screen"
+        },
+        {
+          "from": "nd_mo_screen",
+          "to": "nd_mo_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_wallet",
+      "name": "Wallet",
+      "entryTriggerId": "trg_wallet",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_w_entry",
+      "nodes": [
+        {
+          "id": "nd_w_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_w_fetch",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_w_fetch",
+          "type": "DB_QUERY",
+          "label": "Fetch wallet",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_w_set_vars",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "wallets",
+            "where": {
+              "user_id": "@ctx.user_id"
+            },
+            "limit": 1,
+            "resultVar": "wallet_row"
+          }
+        },
+        {
+          "id": "nd_w_set_vars",
+          "type": "COMPUTE",
+          "label": "Extract balance",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_w_screen",
+          "nextIf": {},
+          "cfg": {
+            "variable": "balance",
+            "expression": "@input.wallet_row[0][\"balance_stars\"] if @input.wallet_row else 0"
+          }
+        },
+        {
+          "id": "nd_w_screen",
+          "type": "SCREEN",
+          "label": "Show wallet",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_w_end",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_wallet"
+          }
+        },
+        {
+          "id": "nd_w_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_w_entry",
+          "to": "nd_w_fetch"
+        },
+        {
+          "from": "nd_w_fetch",
+          "to": "nd_w_set_vars"
+        },
+        {
+          "from": "nd_w_set_vars",
+          "to": "nd_w_screen"
+        },
+        {
+          "from": "nd_w_screen",
+          "to": "nd_w_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_topup_success",
+      "name": "Topup Success",
+      "entryTriggerId": "trg_wallet_topup",
+      "backable": false,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_ts_entry",
+      "nodes": [
+        {
+          "id": "nd_ts_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_ts_fetch_wallet",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_ts_fetch_wallet",
+          "type": "DB_QUERY",
+          "label": "Fetch wallet row",
+          "position": {
+            "x": 40,
+            "y": 100
+          },
+          "next": "nd_ts_credit",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "wallets",
+            "where": {
+              "user_id": "@ctx.user_id"
+            },
+            "limit": 1,
+            "resultVar": "wallet_row"
+          }
+        },
+        {
+          "id": "nd_ts_credit",
+          "type": "DB_QUERY",
+          "label": "Credit wallet",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_ts_log",
+          "nextIf": {},
+          "cfg": {
+            "op": "update",
+            "table": "wallets",
+            "where": {
+              "user_id": "@ctx.user_id"
+            },
+            "fields": {
+              "balance_stars": "@expr.int(@input.wallet_row[0][\"balance_stars\"]) + @ctx.payment.amount"
+            },
+            "resultVar": "updated_wallets"
+          }
+        },
+        {
+          "id": "nd_ts_log",
+          "type": "DB_QUERY",
+          "label": "Log transaction",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_ts_msg",
+          "nextIf": {},
+          "cfg": {
+            "op": "insert",
+            "table": "wallet_tx",
+            "fields": {
+              "user_id": "@ctx.user_id",
+              "kind": "topup",
+              "amount": "@ctx.payment.amount",
+              "charge_id": "@ctx.payment.charge_id",
+              "balance_after": 0,
+              "note": "Topup via Stars"
+            },
+            "resultVar": "tx_id"
+          }
+        },
+        {
+          "id": "nd_ts_msg",
+          "type": "MESSAGE",
+          "label": "Confirm to user",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_ts_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "✅ تم إيداع {ctx.payment.amount} ⭐ في محفظتك.\n\nاستخدم /wallet لعرض الرصيد.",
+            "parseMode": ""
+          }
+        },
+        {
+          "id": "nd_ts_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_ts_entry",
+          "to": "nd_ts_fetch_wallet"
+        },
+        {
+          "from": "nd_ts_fetch_wallet",
+          "to": "nd_ts_credit"
+        },
+        {
+          "from": "nd_ts_credit",
+          "to": "nd_ts_log"
+        },
+        {
+          "from": "nd_ts_log",
+          "to": "nd_ts_msg"
+        },
+        {
+          "from": "nd_ts_msg",
+          "to": "nd_ts_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_support",
+      "name": "Support",
+      "entryTriggerId": "trg_support",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 60,
+      "startNodeId": "nd_sup_entry",
+      "nodes": [
+        {
+          "id": "nd_sup_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_sup_screen",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_sup_screen",
+          "type": "SCREEN",
+          "label": "Support menu",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_sup_wait",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_support"
+          }
+        },
+        {
+          "id": "nd_sup_wait",
+          "type": "SEND_AND_WAIT",
+          "label": "Wait for action",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_sup_end",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_support",
+            "expect": "callback",
+            "variable": "support_action",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_sup_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_sup_entry",
+          "to": "nd_sup_screen"
+        },
+        {
+          "from": "nd_sup_screen",
+          "to": "nd_sup_wait"
+        },
+        {
+          "from": "nd_sup_wait",
+          "to": "nd_sup_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_admin_menu",
+      "name": "Admin Menu",
+      "entryTriggerId": "trg_admin",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": true,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_adm_entry",
+      "nodes": [
+        {
+          "id": "nd_adm_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_adm_auth",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_adm_auth",
+          "type": "AUTH_CHECK",
+          "label": "Verify admin",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_adm_screen",
+          "nextIf": {},
+          "cfg": {
+            "require": "admin",
+            "failAction": "message",
+            "failMessage": "🚫 هذا الأمر متاح للمشرفين فقط."
+          }
+        },
+        {
+          "id": "nd_adm_screen",
+          "type": "SCREEN",
+          "label": "Admin panel",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_adm_end",
+          "nextIf": {},
+          "cfg": {
+            "screenId": "scr_admin"
+          }
+        },
+        {
+          "id": "nd_adm_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_adm_entry",
+          "to": "nd_adm_auth"
+        },
+        {
+          "from": "nd_adm_auth",
+          "to": "nd_adm_screen"
+        },
+        {
+          "from": "nd_adm_screen",
+          "to": "nd_adm_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_dispute",
+      "name": "Dispute",
+      "entryTriggerId": "trg_dispute",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 120,
+      "startNodeId": "nd_dis_entry",
+      "nodes": [
+        {
+          "id": "nd_dis_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_dis_order",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_dis_order",
+          "type": "ASK",
+          "label": "Which order?",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_dis_reason",
+          "nextIf": {},
+          "cfg": {
+            "variable": "order_id",
+            "prompt": "🆘 <b>فتح نزاع</b>\n\nما رقم الطلب الذي تريد فتح نزاع بشأنه؟",
+            "inputType": "number",
+            "timeoutSeconds": 300
+          }
+        },
+        {
+          "id": "nd_dis_reason",
+          "type": "ASK",
+          "label": "Reason",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_dis_insert",
+          "nextIf": {},
+          "cfg": {
+            "variable": "reason",
+            "prompt": "اشرح المشكلة بالتفصيل (20-1000 حرف):",
+            "inputType": "text",
+            "validation": "^.{20,1000}$",
+            "errorMessage": "❌ الشرح قصير جداً أو طويل جداً.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_dis_insert",
+          "type": "DB_QUERY",
+          "label": "Create dispute",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_dis_update_order",
+          "nextIf": {},
+          "cfg": {
+            "op": "insert",
+            "table": "disputes",
+            "fields": {
+              "order_id": "@input.order_id",
+              "opened_by": "@ctx.user_id",
+              "reason": "@input.reason",
+              "status": "open"
+            },
+            "resultVar": "dispute_id"
+          }
+        },
+        {
+          "id": "nd_dis_update_order",
+          "type": "DB_QUERY",
+          "label": "Mark order disputed",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": "nd_dis_notify",
+          "nextIf": {},
+          "cfg": {
+            "op": "update",
+            "table": "orders",
+            "where": {
+              "id": "@input.order_id"
+            },
+            "fields": {
+              "status": "disputed",
+              "dispute_reason": "@input.reason"
+            },
+            "resultVar": "updated_orders"
+          }
+        },
+        {
+          "id": "nd_dis_notify",
+          "type": "MESSAGE",
+          "label": "Notify admins",
+          "position": {
+            "x": 40,
+            "y": 720
+          },
+          "next": "nd_dis_confirm",
+          "nextIf": {},
+          "cfg": {
+            "text": "⚠️ <b>نزاع جديد</b>\n\nنزاع #{dispute_id}\nالطلب: #{order_id}\nمن: {ctx.first_name}\n\nالسبب:\n{reason}",
+            "parseMode": "HTML",
+            "chatId": "@env.SUPPORT_CHAT_ID"
+          }
+        },
+        {
+          "id": "nd_dis_confirm",
+          "type": "MESSAGE",
+          "label": "Confirm to user",
+          "position": {
+            "x": 40,
+            "y": 860
+          },
+          "next": "nd_dis_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "✅ تم فتح النزاع #{dispute_id}.\n\nسيقوم فريق الدعم بمراجعة الطلب خلال 24 ساعة. المبلغ محجوز حتى الحل.",
+            "parseMode": ""
+          }
+        },
+        {
+          "id": "nd_dis_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 1000
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_dis_entry",
+          "to": "nd_dis_order"
+        },
+        {
+          "from": "nd_dis_order",
+          "to": "nd_dis_reason"
+        },
+        {
+          "from": "nd_dis_reason",
+          "to": "nd_dis_insert"
+        },
+        {
+          "from": "nd_dis_insert",
+          "to": "nd_dis_update_order"
+        },
+        {
+          "from": "nd_dis_update_order",
+          "to": "nd_dis_notify"
+        },
+        {
+          "from": "nd_dis_notify",
+          "to": "nd_dis_confirm"
+        },
+        {
+          "from": "nd_dis_confirm",
+          "to": "nd_dis_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_auto_release",
+      "name": "Auto Release Escrow",
+      "entryTriggerId": null,
+      "backable": false,
+      "requiresAuth": false,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_ar_entry",
+      "nodes": [
+        {
+          "id": "nd_ar_entry",
+          "type": "TRIGGER",
+          "label": "Scheduled entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_ar_find",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_ar_find",
+          "type": "DB_QUERY",
+          "label": "Find delivered orders past AUTO_RELEASE_HOURS",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_ar_release",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "orders",
+            "where": {
+              "status": "delivered"
+            },
+            "orderBy": "created_at ASC",
+            "limit": 100,
+            "resultVar": "expired_orders"
+          }
+        },
+        {
+          "id": "nd_ar_release",
+          "type": "DB_QUERY",
+          "label": "Release escrow to seller",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_ar_count",
+          "nextIf": {},
+          "cfg": {
+            "op": "update",
+            "table": "orders",
+            "where": {
+              "status": "delivered"
+            },
+            "fields": {
+              "status": "confirmed",
+              "seller_paid_at": "@expr.now()"
+            },
+            "resultVar": "released_count"
+          }
+        },
+        {
+          "id": "nd_ar_count",
+          "type": "COMPUTE",
+          "label": "Count released",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_ar_notify",
+          "nextIf": {},
+          "cfg": {
+            "variable": "released_count",
+            "expression": "@expr.len(@input.expired_orders)"
+          }
+        },
+        {
+          "id": "nd_ar_notify",
+          "type": "MESSAGE",
+          "label": "Notify support channel",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": "nd_ar_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "♻️ Auto-release executed.\nReleased orders: {released_count}",
+            "parseMode": "",
+            "chatId": "@env.SUPPORT_CHAT_ID"
+          }
+        },
+        {
+          "id": "nd_ar_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 720
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_ar_entry",
+          "to": "nd_ar_find"
+        },
+        {
+          "from": "nd_ar_find",
+          "to": "nd_ar_release"
+        },
+        {
+          "from": "nd_ar_release",
+          "to": "nd_ar_count"
+        },
+        {
+          "from": "nd_ar_count",
+          "to": "nd_ar_notify"
+        },
+        {
+          "from": "nd_ar_notify",
+          "to": "nd_ar_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_browse_filter",
+      "name": "Browse Filter",
+      "entryTriggerId": "trg_cat",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_bf_entry",
+      "nodes": [
+        {
+          "id": "nd_bf_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_bf_parse",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_bf_parse",
+          "type": "COMPUTE",
+          "label": "Extract filter value",
+          "position": {
+            "x": 40,
+            "y": 140
+          },
+          "next": "nd_bf_query",
+          "nextIf": {},
+          "cfg": {
+            "variable": "filter_value",
+            "expression": "@expr.re.search('(?:cat|sort):(.+)', @ctx.callback_data).group(1)"
+          }
+        },
+        {
+          "id": "nd_bf_query",
+          "type": "DB_QUERY",
+          "label": "Query listings",
+          "position": {
+            "x": 40,
+            "y": 260
+          },
+          "next": "nd_bf_summary",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "accounts",
+            "where": {
+              "status": "active"
+            },
+            "orderBy": "price_stars ASC",
+            "limit": 10,
+            "resultVar": "browse_results"
+          }
+        },
+        {
+          "id": "nd_bf_summary",
+          "type": "COMPUTE",
+          "label": "Format summary",
+          "position": {
+            "x": 40,
+            "y": 380
+          },
+          "next": "nd_bf_msg",
+          "nextIf": {},
+          "cfg": {
+            "variable": "browse_summary",
+            "expression": "@expr.format_orders(@input.browse_results)"
+          }
+        },
+        {
+          "id": "nd_bf_msg",
+          "type": "MESSAGE",
+          "label": "Show results",
+          "position": {
+            "x": 40,
+            "y": 500
+          },
+          "next": "nd_bf_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "🛍 <b>نتائج التصفية</b>\n\n{browse_summary}\n\nاضغط زراً للتصفية مرة أخرى.",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_bf_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 620
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_bf_entry",
+          "to": "nd_bf_parse"
+        },
+        {
+          "from": "nd_bf_parse",
+          "to": "nd_bf_query"
+        },
+        {
+          "from": "nd_bf_query",
+          "to": "nd_bf_summary"
+        },
+        {
+          "from": "nd_bf_summary",
+          "to": "nd_bf_msg"
+        },
+        {
+          "from": "nd_bf_msg",
+          "to": "nd_bf_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_wallet_topup",
+      "name": "Wallet Top-up Invoice",
+      "entryTriggerId": "trg_wallet_topup_btn",
+      "backable": false,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_wt_entry",
+      "nodes": [
+        {
+          "id": "nd_wt_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_wt_invoice",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_wt_invoice",
+          "type": "PAYMENT",
+          "label": "Send topup invoice",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_wt_end",
+          "nextIf": {},
+          "cfg": {
+            "stars": true,
+            "currency": "XTR",
+            "amount": 100,
+            "title": "Wallet top-up",
+            "description": "Add 100 Stars to your wallet",
+            "payload": "topup:100",
+            "startParam": "topup"
+          }
+        },
+        {
+          "id": "nd_wt_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_wt_entry",
+          "to": "nd_wt_invoice"
+        },
+        {
+          "from": "nd_wt_invoice",
+          "to": "nd_wt_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_wallet_withdraw",
+      "name": "Wallet Withdraw",
+      "entryTriggerId": "trg_wallet_withdraw_btn",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 30,
+      "startNodeId": "nd_ww_entry",
+      "nodes": [
+        {
+          "id": "nd_ww_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_ww_msg",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_ww_msg",
+          "type": "MESSAGE",
+          "label": "Ask for amount",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_ww_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "💸 <b>سحب من المحفظة</b>\n\nأرسل المبلغ المطلوب سحبه (بالنجوم). سيتم تحويل طلبك إلى فريق الدعم للمراجعة.",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_ww_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_ww_entry",
+          "to": "nd_ww_msg"
+        },
+        {
+          "from": "nd_ww_msg",
+          "to": "nd_ww_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_wallet_history",
+      "name": "Wallet History",
+      "entryTriggerId": "trg_wallet_history_btn",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_wh_entry",
+      "nodes": [
+        {
+          "id": "nd_wh_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_wh_query",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_wh_query",
+          "type": "DB_QUERY",
+          "label": "Fetch last 10 tx",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_wh_msg",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "wallet_tx",
+            "where": {
+              "user_id": "@ctx.user_id"
+            },
+            "orderBy": "created_at DESC",
+            "limit": 10,
+            "resultVar": "tx_history"
+          }
+        },
+        {
+          "id": "nd_wh_msg",
+          "type": "MESSAGE",
+          "label": "Show history",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_wh_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "📜 <b>آخر العمليات</b>\n\n{tx_history}\n\n(أحدث 10 عمليات)",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_wh_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_wh_entry",
+          "to": "nd_wh_query"
+        },
+        {
+          "from": "nd_wh_query",
+          "to": "nd_wh_msg"
+        },
+        {
+          "from": "nd_wh_msg",
+          "to": "nd_wh_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_support_ticket",
+      "name": "Support Ticket",
+      "entryTriggerId": "trg_support_new",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 60,
+      "startNodeId": "nd_st_entry",
+      "nodes": [
+        {
+          "id": "nd_st_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_st_ask",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_st_ask",
+          "type": "ASK",
+          "label": "Ask for ticket text",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_st_insert",
+          "nextIf": {},
+          "cfg": {
+            "variable": "ticket_text",
+            "prompt": "📨 أرسل موضوع تذكرتك + وصفها (مثلاً: 'مشكلة دفع - الطلب #123 لم يُسلَّم')",
+            "inputType": "text",
+            "validation": "^.{10,500}$",
+            "errorMessage": "❌ يجب أن يكون بين 10 و 500 حرف.",
+            "timeoutSeconds": 600
+          }
+        },
+        {
+          "id": "nd_st_insert",
+          "type": "DB_QUERY",
+          "label": "Create ticket",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_st_msg",
+          "nextIf": {},
+          "cfg": {
+            "op": "insert",
+            "table": "support_tickets",
+            "fields": {
+              "user_id": "@ctx.user_id",
+              "subject": "@input.ticket_text",
+              "message": "@input.ticket_text",
+              "status": "open"
+            },
+            "resultVar": "ticket_id"
+          }
+        },
+        {
+          "id": "nd_st_msg",
+          "type": "MESSAGE",
+          "label": "Confirm",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_st_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "✅ تم فتح التذكرة #{ticket_id}.\n\nسيتواصل معك فريق الدعم في أقرب وقت.",
+            "parseMode": ""
+          }
+        },
+        {
+          "id": "nd_st_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_st_entry",
+          "to": "nd_st_ask"
+        },
+        {
+          "from": "nd_st_ask",
+          "to": "nd_st_insert"
+        },
+        {
+          "from": "nd_st_insert",
+          "to": "nd_st_msg"
+        },
+        {
+          "from": "nd_st_msg",
+          "to": "nd_st_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_profile_lang",
+      "name": "Profile Language",
+      "entryTriggerId": "trg_profile_lang",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": false,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_pl_entry",
+      "nodes": [
+        {
+          "id": "nd_pl_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_pl_msg",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_pl_msg",
+          "type": "MESSAGE",
+          "label": "Show language picker",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_pl_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "🌐 <b>اختر اللغة</b>\n\nأرسل: ar / en / ru",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_pl_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_pl_entry",
+          "to": "nd_pl_msg"
+        },
+        {
+          "from": "nd_pl_msg",
+          "to": "nd_pl_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_admin_pending",
+      "name": "Admin Pending",
+      "entryTriggerId": "trg_admin_pending",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": true,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_ap_entry",
+      "nodes": [
+        {
+          "id": "nd_ap_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_ap_query",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_ap_query",
+          "type": "DB_QUERY",
+          "label": "Fetch pending listings",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_ap_msg",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "accounts",
+            "where": {
+              "status": "pending_review"
+            },
+            "orderBy": "created_at ASC",
+            "limit": 10,
+            "resultVar": "pending_listings"
+          }
+        },
+        {
+          "id": "nd_ap_msg",
+          "type": "MESSAGE",
+          "label": "Show pending",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_ap_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "⏳ <b>معروضات قيد المراجعة</b>\n\n{pending_listings}\n\n/approve ID  /  /reject ID",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_ap_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_ap_entry",
+          "to": "nd_ap_query"
+        },
+        {
+          "from": "nd_ap_query",
+          "to": "nd_ap_msg"
+        },
+        {
+          "from": "nd_ap_msg",
+          "to": "nd_ap_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_admin_disputes",
+      "name": "Admin Disputes",
+      "entryTriggerId": "trg_admin_disputes",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": true,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_ad_entry",
+      "nodes": [
+        {
+          "id": "nd_ad_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_ad_query",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_ad_query",
+          "type": "DB_QUERY",
+          "label": "Fetch open disputes",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_ad_msg",
+          "nextIf": {},
+          "cfg": {
+            "op": "select",
+            "table": "disputes",
+            "where": {
+              "status": "open"
+            },
+            "orderBy": "created_at ASC",
+            "limit": 10,
+            "resultVar": "open_disputes"
+          }
+        },
+        {
+          "id": "nd_ad_msg",
+          "type": "MESSAGE",
+          "label": "Show disputes",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_ad_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "⚖️ <b>نزاعات مفتوحة</b>\n\n{open_disputes}",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_ad_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_ad_entry",
+          "to": "nd_ad_query"
+        },
+        {
+          "from": "nd_ad_query",
+          "to": "nd_ad_msg"
+        },
+        {
+          "from": "nd_ad_msg",
+          "to": "nd_ad_end"
+        }
+      ]
+    },
+    {
+      "id": "flw_admin_stats",
+      "name": "Admin Stats",
+      "entryTriggerId": "trg_admin_stats",
+      "backable": true,
+      "requiresAuth": true,
+      "adminOnly": true,
+      "cooldownSeconds": 0,
+      "startNodeId": "nd_as_entry",
+      "nodes": [
+        {
+          "id": "nd_as_entry",
+          "type": "TRIGGER",
+          "label": "Entry",
+          "position": {
+            "x": 40,
+            "y": 40
+          },
+          "next": "nd_as_q1",
+          "nextIf": {},
+          "cfg": {}
+        },
+        {
+          "id": "nd_as_q1",
+          "type": "DB_QUERY",
+          "label": "Count accounts",
+          "position": {
+            "x": 40,
+            "y": 160
+          },
+          "next": "nd_as_q2",
+          "nextIf": {},
+          "cfg": {
+            "op": "count",
+            "table": "accounts",
+            "where": {},
+            "resultVar": "accounts_count"
+          }
+        },
+        {
+          "id": "nd_as_q2",
+          "type": "DB_QUERY",
+          "label": "Count orders",
+          "position": {
+            "x": 40,
+            "y": 300
+          },
+          "next": "nd_as_q3",
+          "nextIf": {},
+          "cfg": {
+            "op": "count",
+            "table": "orders",
+            "where": {},
+            "resultVar": "orders_count"
+          }
+        },
+        {
+          "id": "nd_as_q3",
+          "type": "DB_QUERY",
+          "label": "Count disputes",
+          "position": {
+            "x": 40,
+            "y": 440
+          },
+          "next": "nd_as_msg",
+          "nextIf": {},
+          "cfg": {
+            "op": "count",
+            "table": "disputes",
+            "where": {
+              "status": "open"
+            },
+            "resultVar": "disputes_count"
+          }
+        },
+        {
+          "id": "nd_as_msg",
+          "type": "MESSAGE",
+          "label": "Show stats",
+          "position": {
+            "x": 40,
+            "y": 580
+          },
+          "next": "nd_as_end",
+          "nextIf": {},
+          "cfg": {
+            "text": "📊 <b>إحصائيات المنصة</b>\n\nمعروضات: {accounts_count}\nطلبات: {orders_count}\nنزاعات مفتوحة: {disputes_count}",
+            "parseMode": "HTML"
+          }
+        },
+        {
+          "id": "nd_as_end",
+          "type": "END",
+          "label": "End",
+          "position": {
+            "x": 40,
+            "y": 720
+          },
+          "next": null,
+          "nextIf": {},
+          "cfg": {
+            "clearState": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "nd_as_entry",
+          "to": "nd_as_q1"
+        },
+        {
+          "from": "nd_as_q1",
+          "to": "nd_as_q2"
+        },
+        {
+          "from": "nd_as_q2",
+          "to": "nd_as_q3"
+        },
+        {
+          "from": "nd_as_q3",
+          "to": "nd_as_msg"
+        },
+        {
+          "from": "nd_as_msg",
+          "to": "nd_as_end"
+        }
+      ]
+    }
+  ],
+  "globalHandlers": {
+    "errorHandler": true,
+    "rateLimiter": true,
+    "authMiddleware": true,
+    "loggingMiddleware": true,
+    "adminOnly": [],
+    "rateUserPer": 10,
+    "rateUserCount": 10,
+    "rateChatPer": 60,
+    "rateChatCount": 60,
+    "errorReportToAdmins": true
+  },
+  "scheduling": {
+    "jobs": [
+      {
+        "id": "job_auto_release",
+        "name": "auto_release_escrow",
+        "kind": "interval",
+        "cron": "",
+        "intervalSeconds": 3600,
+        "flowId": "flw_auto_release",
+        "chatId": "@env.SUPPORT_CHAT_ID",
+        "enabled": true
+      }
+    ]
+  },
+  "payments": {
+    "enabled": true,
+    "currency": "XTR",
+    "providerTokenVar": "PAYMENT_PROVIDER_TOKEN",
+    "defaultAmount": 100,
+    "title": "دفع مضمون",
+    "description": "دفع محمي عبر Escrow",
+    "shippingId": "none",
+    "shippingTitle": "بلا شحن",
+    "shippingLabel": "الشحن",
+    "shippingAmount": 0
+  },
+  "webhooks": {
+    "enabled": false,
+    "urlVar": "WEBHOOK_URL",
+    "secretVar": "WEBHOOK_SECRET",
+    "port": 8443,
+    "path": "/webhook",
+    "healthEndpoint": true
+  },
+  "deployment": {
+    "termux": false,
+    "docker": true,
+    "systemd": true,
+    "pm2": false
+  },
+  "uiPrefs": {
+    "theme": "dark",
+    "canvasZoom": 1,
+    "snapToGrid": true,
+    "autoLayout": true
+  },
+  "__flowId": "flw_main_menu"
+}
