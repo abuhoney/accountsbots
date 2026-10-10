@@ -8,5 +8,5 @@ loguru==0.7.2
 passlib==1.7.4
 python-dotenv==1.0.1
 python-jose==3.3.0
-python-telegram-bot==21.7
+python-telegram-bot==22.8
 sqlalchemy==2.0.36
