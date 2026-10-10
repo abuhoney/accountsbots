@@ -8,7 +8,7 @@ from typing import Any
 
 from loguru import logger
 from telegram import (
-    CopyText,
+    CopyTextButton,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     InlineQueryResultArticle,
@@ -93,7 +93,7 @@ class Adapter:
                         switch_inline_query_current_chat=b.get("switch_inline", "")))
                 elif kind == "copy_text":
                     line.append(InlineKeyboardButton(text,
-                        copy_text=CopyText(text=b.get("copy_text", ""))))
+                        copy_text=CopyTextButton(text=b.get("copy_text", ""))))
                 else:
                     line.append(InlineKeyboardButton(text,
                         callback_data=str(b.get("callback", "noop"))[:64]))
