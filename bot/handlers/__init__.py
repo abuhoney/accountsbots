@@ -181,7 +181,7 @@ def register_all(app: Application, engine) -> int:
         filters.TEXT & ~filters.COMMAND, functools.partial(messages.on_message, engine)))
     count += 1
     app.add_handler(MessageHandler(
-        filters.PHOTO | filters.DOCUMENT | filters.VIDEO | filters.VIDEO_NOTE
+        filters.PHOTO | filters.Document.ALL | filters.VIDEO | filters.VIDEO_NOTE
         | filters.VOICE | filters.ANIMATION | filters.LOCATION | filters.CONTACT,
         functools.partial(messages.on_message, engine)))
     count += 1
