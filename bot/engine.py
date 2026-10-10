@@ -104,8 +104,7 @@ def _format_orders(orders: Any) -> str:
     if not orders:
         return "لا توجد طلبات بعد."
     try:
-        return "
-".join(
+        return "\n".join(
             f'#{o["id"]} — {o["price_stars"]} ⭐ — {o["status"]}' for o in orders
         )
     except (KeyError, TypeError, IndexError):
