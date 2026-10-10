@@ -95,7 +95,7 @@ def build_ctx(adapter, update: Update, kind: str = "message") -> "Ctx":
         first_name=(user.first_name or "") if user else "",
         language=((user.language_code or "en") if user else "en"),
         chat_type=chat.type if chat else "private",
-        is_premium=bool(user.premium) if user else False,
+        is_premium=bool(user.is_premium) if user else False,
         reply_to=(message.reply_to_message.message_id
                   if (message is not None and message.reply_to_message is not None) else 0),
         callback_data=(cq.data or "") if cq is not None else "",
